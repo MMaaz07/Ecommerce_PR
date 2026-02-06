@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Products, Category, Cart, CartItem, Order, OrderItem
-from .serializers import ProductSerializer, CategorySerializer, CartItemSerializer, CartSerializer
-from rest_framework.decorators import api_view
+from .serializers import ProductSerializer, CategorySerializer, CartItemSerializer, CartSerializer, UserSerializer, RegisterSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import status
 from rest_framework.response import Response
 
 # Create your views here.
@@ -34,16 +36,18 @@ def get_product(request,pk):
         return Response({'error':'Product not found'}, status=404)
 
 @api_view(['GET'])
-def get_cart(requets):
-    cart, created=Cart.objects.get_or_create(user=None)
+@permission_classes([IsAuthenticated])
+def get_cart(request):
+    cart, created=Cart.objects.get_or_create(user=request.user)
     serializer=CartSerializer(cart)
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_to_cart(request):
     product_id=request.data.get('product_id')
     product=Products.objects.get(id=product_id)
-    cart, created=Cart.objects.get_or_create(user=None)
+    cart, created=Cart.objects.get_or_create(user=request.user)
     item, created=CartItem.objects.get_or_create(cart=cart, product=product)
     if not created:
         item.quantity+=1
@@ -51,6 +55,7 @@ def add_to_cart(request):
     return Response({'message':'Product added to cart', "cart":CartSerializer(cart).data})
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_cart_quantity(request):
     item_id=request.data.get('item_id')
     quantity=request.data.get('quantity')
@@ -75,6 +80,7 @@ def update_cart_quantity(request):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def remove_from_cart(request):
     item_id=request.data.get('item_id')
     CartItem.objects.filter(id=item_id).delete()
@@ -83,27 +89,27 @@ def remove_from_cart(request):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def create_order(request):
     try:
         data=request.data
-
         name=data.get('name')
         address=data.get('address')
         phone=data.get('phone')
-        payment_mode=data.get('payment_mode', 'cod')
+        payment_mode=data.get('payment_mode', 'COD')
 
-        cart=Cart.objects.first()
-
-        if not cart or not cart.items.exists():
+        #validate phone number
+        if not phone.isdigit() or len(phone)<10:
+            return Response({'error':'Invalid Phone number'}, status=400)
+        
+        cart, created=Cart.objects.get_or_create(user=request.user)
+        if not cart.items.exists():
             return Response({'error':'Cart is Empty'}, status=400)
-        total=sum(float(item.product.price)*item.quantity for item in cart.items.all())
+        
+        total=sum([item.product.price*item.quantity for item in cart.items.all()])
 
-        order=Order.objects.create(
-            user=None,
-            total_amount=total,
-        )
+        order=Order.objects.create(user=request.user, total_amount=total)
 
-        #Create Order Items
         for item in cart.items.all():
             OrderItem.objects.create(
                 order=order,
@@ -114,9 +120,19 @@ def create_order(request):
         
         #clear the cart
         cart.items.all().delete()
-
-        return Response({'message':'Order placed successfully', 'order_id':order.id})
+        return Response({'message':'Order created successfully', 'order_id':order.id})
     
     except Exception as e:
-        return Response({"error":str(e)}, status=500)
+        return Response({'error':str(e)}, status=500)
+        
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer=RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user=serializer.save()
+        return Response({'message':'User Created Successfully', 'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
