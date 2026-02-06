@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from .models import Products, Category, Cart, CartItem
+from .models import Products, Category, Cart, CartItem, Order, OrderItem
 from .serializers import ProductSerializer, CategorySerializer, CartItemSerializer, CartSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -51,7 +51,72 @@ def add_to_cart(request):
     return Response({'message':'Product added to cart', "cart":CartSerializer(cart).data})
 
 @api_view(['POST'])
+def update_cart_quantity(request):
+    item_id=request.data.get('item_id')
+    quantity=request.data.get('quantity')
+
+    if not item_id or quantity is None:
+        return Response({'message':'Item ID and quantity are required'}, status=400)
+
+    try:
+        item=CartItem.objects.get(id=item_id)
+        quantity=int(quantity)
+        if quantity<1:
+            item.delete()
+            return Response({'error':'Quantity must be atleast 1'}, status=400)
+        
+        item.quantity=quantity
+        item.save()
+        serializer=CartItemSerializer(item)
+        return Response(serializer.data)
+    except CartItem.DoesNotExist:
+        return Response({'error':'Cart item not found'}, status=404)
+
+
+
+@api_view(['POST'])
 def remove_from_cart(request):
     item_id=request.data.get('item_id')
     CartItem.objects.filter(id=item_id).delete()
     return Response({'message':'Item Removed form cart'})
+
+
+
+@api_view(['POST'])
+def create_order(request):
+    try:
+        data=request.data
+
+        name=data.get('name')
+        address=data.get('address')
+        phone=data.get('phone')
+        payment_mode=data.get('payment_mode', 'cod')
+
+        cart=Cart.objects.first()
+
+        if not cart or not cart.items.exists():
+            return Response({'error':'Cart is Empty'}, status=400)
+        total=sum(float(item.product.price)*item.quantity for item in cart.items.all())
+
+        order=Order.objects.create(
+            user=None,
+            total_amount=total,
+        )
+
+        #Create Order Items
+        for item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+        
+        #clear the cart
+        cart.items.all().delete()
+
+        return Response({'message':'Order placed successfully', 'order_id':order.id})
+    
+    except Exception as e:
+        return Response({"error":str(e)}, status=500)
+
