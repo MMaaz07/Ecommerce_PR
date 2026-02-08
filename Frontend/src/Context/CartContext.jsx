@@ -9,9 +9,8 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [cartCount, setCartCount] = useState(0);
-  const [cartLoaded, setCartLoaded] = useState(false);
 
-  /* ---------------- FETCH FULL CART (ONLY WHEN NEEDED) ---------------- */
+  /* ---------------- FETCH FULL CART ---------------- */
   const fetchCart = useCallback(async () => {
     if (!getAccessToken()) return;
 
@@ -23,13 +22,12 @@ export const CartProvider = ({ children }) => {
       setCartItems(data.items || []);
       setTotal(data.total || 0);
       setCartCount(data.items?.length || 0);
-      setCartLoaded(true);
     } catch (err) {
       console.log("Error fetching cart", err);
     }
   }, [BASEURL]);
 
-  /* ---------------- FETCH CART COUNT (FOR HOME / NAVBAR) ---------------- */
+  /* ---------------- FETCH CART COUNT ---------------- */
   const fetchCartCount = useCallback(async () => {
     if (!getAccessToken()) return;
 
@@ -44,7 +42,7 @@ export const CartProvider = ({ children }) => {
     }
   }, [BASEURL]);
 
-  /* ---------------- ADD TO CART (OPTIMISTIC) ---------------- */
+  /* ---------------- ADD TO CART ---------------- */
   const addToCart = async (productId) => {
     try {
       await authFetch(`${BASEURL}/api/cart/add/`, {
@@ -53,11 +51,7 @@ export const CartProvider = ({ children }) => {
         body: JSON.stringify({ product_id: productId }),
       });
 
-      // instant UI update
-      setCartCount((prev) => prev + 1);
-
-      // sync later only if cart page is open
-      if (cartLoaded) fetchCart();
+      await fetchCart();        // ✅ ALWAYS sync
     } catch (err) {
       console.log("Failed to add product", err);
     }
@@ -72,10 +66,7 @@ export const CartProvider = ({ children }) => {
         body: JSON.stringify({ item_id: itemId }),
       });
 
-      setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-      setCartCount((prev) => Math.max(prev - 1, 0));
-
-      if (cartLoaded) fetchCart();
+      await fetchCart();        // ✅ ALWAYS sync
     } catch (err) {
       console.log("Failed to remove item", err);
     }
@@ -95,24 +86,17 @@ export const CartProvider = ({ children }) => {
         body: JSON.stringify({ item_id: itemId, quantity }),
       });
 
-      setCartItems((prev) =>
-        prev.map((item) =>
-          item.id === itemId ? { ...item, quantity } : item
-        )
-      );
-
-      if (cartLoaded) fetchCart();
+      await fetchCart();        // ✅ ALWAYS sync
     } catch (err) {
       console.log("Failed to update quantity", err);
     }
   };
 
-  /* ---------------- CLEAR CART (LOGOUT) ---------------- */
+  /* ---------------- CLEAR CART ---------------- */
   const clearCart = () => {
     setCartItems([]);
     setTotal(0);
     setCartCount(0);
-    setCartLoaded(false);
   };
 
   return (
@@ -121,8 +105,8 @@ export const CartProvider = ({ children }) => {
         cartItems,
         total,
         cartCount,
-        fetchCart,       // call ONLY on cart page
-        fetchCartCount,  // call on home/navbar
+        fetchCart,        // call on cart page
+        fetchCartCount,   // call on home/navbar
         addToCart,
         removeFromCart,
         updateQuantity,
