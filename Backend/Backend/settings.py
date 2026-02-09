@@ -96,10 +96,6 @@ DATABASES = {
     }
 }
 
-print("CA path:", os.path.join(BASE_DIR, "certs/ca.pem"))
-print("Exists:", os.path.exists(os.path.join(BASE_DIR, "certs/ca.pem")))
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
