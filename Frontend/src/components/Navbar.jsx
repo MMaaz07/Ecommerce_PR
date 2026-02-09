@@ -45,7 +45,7 @@ function Navbar(){
                 🛒 Cart
                 {cartCount > 0 && (
                     <span className='absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full px-2'>
-                        {cartCount}
+                        {/* {cartCount} */}
                     </span>
                 )}
             </Link>
