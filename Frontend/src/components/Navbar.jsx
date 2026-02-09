@@ -6,9 +6,12 @@ function Navbar(){
     const {cartItems}=useCart();
     const navigate=useNavigate();
 
-    const cartCount= cartItems.reduce((total, item)=>total + item.quantity, 0);
 
     const isLoggedIn= !!getAccessToken();
+
+    if(isLoggedIn){
+        const cartCount= cartItems.reduce((total, item)=>total + item.quantity, 0);
+    }
 
     const handleLogout=()=>{
         clearToken();
