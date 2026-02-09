@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authFetch, getAccessToken } from "../utils/auth";
+import { getAccessToken } from "../utils/auth";
 
 const CartContext = createContext();
 
@@ -7,6 +8,7 @@ export const CartProvider = ({ children }) => {
 
   const BASEURL=import.meta.env.VITE_DJANGO_BASE_URL;
   const [total, setTotal]=useState(0);
+  const [cartItems, setCartItems] = useState([]);
 
   const fetchCart=async()=>{
     try{
@@ -23,27 +25,12 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  useEffect(()=>{
-    fetchCart();
-  },[]);
+  useEffect(() => {
+  if (!getAccessToken()) return;
+  fetchCart();
+}, []);
 
-  const [cartItems, setCartItems] = useState([]);
 
-  // const addToCart = (product) => {
-  //   const existing = cartItems.find((item) => item.id === product.id);
-
-  //   if (existing) {
-  //     setCartItems((prev) =>
-  //       prev.map((item) =>
-  //         item.id === product.id
-  //           ? { ...item, quantity: item.quantity + 1 }
-  //           : item,
-  //       ),
-  //     );
-  //   } else {
-  //     setCartItems([...cartItems, { ...product, quantity: 1 }]);
-  //   }
-  // };
 
   const addToCart= async (productId) =>{
     try{
@@ -61,10 +48,6 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  // const removeFromCart = (id) => {
-  //   setCartItems(cartItems.filter((item) => item.id !== id));
-  // };
-
   const removeFromCart = async(itemId)=>{
     try{
       await authFetch(`${BASEURL}/api/cart/remove/`,{
@@ -81,13 +64,6 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  // const updateQuantity = (id, quantity) => {
-  //   if (quantity < 1) return;
-
-  //   setCartItems(
-  //     cartItems.map((item) => (item.id === id ? { ...item, quantity } : item)),
-  //   );
-  // };
 
   const updateQuantity=async(itemId, quantity)=>{
     if(quantity<1){
