@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authFetch, getAccessToken } from "../utils/auth";
-import { getAccessToken } from "../utils/auth";
 
 const CartContext = createContext();
 
