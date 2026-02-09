@@ -38,13 +38,24 @@ function ProductDetails() {
     return <div>No product found</div>;
   }
 
-  const handleAddToCart=()=>{
-    if(!localStorage.getItem("access_token")){
-      window.location.href='/login';
-      return;
-    }
-    addToCart(product.id);
+  const handleAddToCart = () => {
+  if (typeof window === "undefined") return;
+
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    window.location.assign("/login");
+    return;
   }
+
+  if (!product?.id) {
+    console.error("Product ID missing");
+    return;
+  }
+
+  addToCart(product.id);
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center py-10">
