@@ -4,96 +4,114 @@ import { authFetch, getAccessToken } from "../utils/auth";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-
-  const BASEURL=import.meta.env.VITE_DJANGO_BASE_URL;
-  const [total, setTotal]=useState(0);
+  const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL;
+  const [total, setTotal] = useState(0);
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchCart=async()=>{
-    try{
-      const res=await authFetch(`${BASEURL}/api/cart/`)
-      if(!res.ok){
-        throw new Error("Failed to fetch cart")
-      }
-      const data=await res.json();
+  // Initial cart fetch (only once)
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const res = await authFetch(`${BASEURL}/api/cart/`);
+      if (!res.ok) throw new Error("Failed to fetch cart");
+
+      const data = await res.json();
       setCartItems(data.items || []);
       setTotal(data.total || 0);
-    }
-    catch(error){
+    } catch (error) {
       console.log("Error Fetching Cart", error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-  if (!getAccessToken()) return;
-  fetchCart();
-}, []);
+    if (!getAccessToken()) return;
+    fetchCart();
+  }, []);
 
+  // ✅ Add To Cart (no refetch)
+  const addToCart = async (productId) => {
+    try {
+      const res = await authFetch(`${BASEURL}/api/cart/add/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product_id: productId }),
+      });
 
+      if (!res.ok) throw new Error("Failed to add");
 
-  const addToCart= async (productId) =>{
-    try{
-      await authFetch(`${BASEURL}/api/cart/add/`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-        },
-        body: JSON.stringify({product_id: productId}),
-      })
-      fetchCart();
-    }
-    catch(error){
+      const data = await res.json();
+
+      // Backend returns full updated cart
+      setCartItems(data.items);
+      setTotal(data.total);
+    } catch (error) {
       console.log("Failed to add Product", error);
     }
-  }
+  };
 
-  const removeFromCart = async(itemId)=>{
-    try{
-      await authFetch(`${BASEURL}/api/cart/remove/`,{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
-        },
-        body: JSON.stringify({item_id:itemId})
-      })
-      fetchCart();
-    }
-    catch(error){
+  // ✅ Remove Item (no refetch)
+  const removeFromCart = async (itemId) => {
+    try {
+      const res = await authFetch(`${BASEURL}/api/cart/remove/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+
+      if (!res.ok) throw new Error("Failed to remove");
+
+      const data = await res.json();
+
+      setCartItems(data.items);
+      setTotal(data.total);
+    } catch (error) {
       console.log("Failed to remove item", error);
     }
-  }
+  };
 
-
-  const updateQuantity=async(itemId, quantity)=>{
-    if(quantity<1){
-      await removeFromCart(itemId);
-      return;
+  // ✅ Update Quantity (no refetch)
+  const updateQuantity = async (itemId, quantity) => {
+    if (quantity < 1) {
+      return removeFromCart(itemId);
     }
-    try{
-      await authFetch(`${BASEURL}/api/cart/update/`,{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({item_id : itemId, quantity})
-      })
-      fetchCart();
-    }
-    catch(error){
-      console.log("Failed to update product details", error);
-    }
-  }
 
+    try {
+      const res = await authFetch(`${BASEURL}/api/cart/update/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId, quantity }),
+      });
 
-  const clearCart=()=>{
+      if (!res.ok) throw new Error("Failed to update");
+
+      const data = await res.json();
+
+      setCartItems(data.items);
+      setTotal(data.total);
+    } catch (error) {
+      console.log("Failed to update product", error);
+    }
+  };
+
+  const clearCart = () => {
     setCartItems([]);
     setTotal(0);
-  }
-
+  };
 
   return (
     <CartContext.Provider
-      value={{ cartItems, total , addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{
+        cartItems,
+        total,
+        loading,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+      }}
     >
       {children}
     </CartContext.Provider>
