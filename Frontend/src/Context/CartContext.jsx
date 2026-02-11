@@ -45,8 +45,8 @@ export const CartProvider = ({ children }) => {
       const data = await res.json();
 
       // Backend returns full updated cart
-      setCartItems(data.items);
-      setTotal(data.total);
+      setCartItems(data.items || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.log("Failed to add Product", error);
     }
@@ -65,8 +65,8 @@ export const CartProvider = ({ children }) => {
 
       const data = await res.json();
 
-      setCartItems(data.items);
-      setTotal(data.total);
+      setCartItems(data.items || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.log("Failed to remove item", error);
     }
@@ -89,8 +89,8 @@ export const CartProvider = ({ children }) => {
 
       const data = await res.json();
 
-      setCartItems(data.items);
-      setTotal(data.total);
+      setCartItems(data.items || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.log("Failed to update product", error);
     }
