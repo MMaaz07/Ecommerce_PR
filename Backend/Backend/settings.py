@@ -29,12 +29,11 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-cloudinary.config( 
-    cloud_name = os.getenv("CLOUD_NAME"), 
-    api_key = os.getenv("CLOUD_API_KEY"), 
-    api_secret = os.getenv("CLOUD_API_SECRET"), # Click 'View API Keys' above to copy your API secret
-    secure=True
-)
+CLOUDINARY_STORAGE={
+    'CLOUD_NAME' : os.getenv("CLOUD_NAME"), 
+    'API_KEY' : os.getenv("CLOUD_API_KEY"), 
+    'API_SECRET' : os.getenv("CLOUD_API_SECRET"), # Click 'View API Keys' above to copy your API secret
+    }
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -172,4 +171,11 @@ SIMPLE_JWT={
     'AUTH_HEADER_TYPES':('Bearer',)
 }
 
-default_file_storage='cloudinary_storage.storage.MediaCloudinaryStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
