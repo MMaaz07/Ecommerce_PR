@@ -18,6 +18,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
 load_dotenv()
 
 # Quick-start development settings - unsuitable for production
@@ -25,6 +28,13 @@ load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
+
+cloudinary.config( 
+    cloud_name = os.getenv("CLOUD_NAME"), 
+    api_key = os.getenv("CLOUD_API_KEY"), 
+    api_secret = os.getenv("CLOUD_API_SECRET"), # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,6 +54,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'stores',
+    'cloudinary',
+    'cloudinary_storage'
 ]
 
 MIDDLEWARE = [
@@ -149,8 +161,8 @@ CORS_ALLOW_ALL_ORIGINS=[
     "http://localhost:3000",
 ]
 
-MEDIA_URL='/media/'
-MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+# MEDIA_URL='/media/'
+# MEDIA_ROOT=os.path.join(BASE_DIR,'media')
 
 SIMPLE_JWT={
     'ACCESS_TOKEN_LIFETIME':timedelta(minutes=60),
@@ -159,3 +171,5 @@ SIMPLE_JWT={
     'BLACKLIST_AFTER_ROTATION':True,
     'AUTH_HEADER_TYPES':('Bearer',)
 }
+
+default_file_storage='cloudinary_storage.storage.MediaCloudinaryStorage'
