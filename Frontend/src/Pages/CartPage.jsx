@@ -16,7 +16,7 @@ function CartPage(){
                             <div key={item.id} className="flex items-center justify-between mb-4" >
                                 <div className="flex items-center gap-4">
                                     {item.product_image && (
-                                    <img src={`${BASEURL}${item.product_image}`} alt={item.product_name} className="w-20 h-20 object-cover rounded" />
+                                    <img src={item.product_image} alt={item.product_name} className="w-20 h-20 object-cover rounded" />
                                     )}
                                 </div>
                                 <div>
