@@ -179,3 +179,5 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+CLOUDINARY_URL=os.getenv("CLOUD_URL")
