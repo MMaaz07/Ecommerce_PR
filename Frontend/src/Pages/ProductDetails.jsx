@@ -43,8 +43,8 @@ function ProductDetails() {
       window.location.href='/login';
       return;
     }
-  }
     addToCart(product.id);
+  }
 
 
   return (
