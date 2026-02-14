@@ -8,6 +8,7 @@ function ProductDetails() {
   const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage]=useState("");
   const {addToCart}=useCart();
 
   useEffect(() => {
@@ -38,13 +39,19 @@ function ProductDetails() {
     return <div>No product found</div>;
   }
 
-  const handleAddToCart=()=>{
+  const handleAddToCart = async ()=>{
     if(!localStorage.getItem("access_token")){
       window.location.href='/login';
       return;
     }
-    addToCart(product.id);
-  }
+    const msg=await addToCart(product.id);
+    if(msg){
+      setMessage(msg);
+      setTimeout(() => {
+        setMessage("");
+      }, 1000);
+    }
+  };
 
 
   return (
@@ -67,6 +74,11 @@ function ProductDetails() {
             <button onClick={handleAddToCart} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
               Add to Cart 🛒
             </button>
+            {message && (
+              <p style={{ color: "green", marginTop: "10px" }}>
+                {message}
+              </p>
+            )}
             {/* Home Button */}
             <div className="mt-4">
               <a href="/" className="text-blue-600 hover:underline">

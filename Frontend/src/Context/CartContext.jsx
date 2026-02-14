@@ -29,14 +29,18 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (productId) => {
     try {
-      await authFetch(`${BASEURL}/api/cart/add/`, {
+      const res=await authFetch(`${BASEURL}/api/cart/add/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ product_id: productId }),
       });
+
+      const data=await res.json();
+
       fetchCart();
+      return data.message;
     } catch (error) {
       console.log("Failed to add Product", error);
     }
